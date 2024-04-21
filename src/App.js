@@ -8,12 +8,17 @@ function getRandomPosition() {
 function App() {
   const [age, setAge] = useState(0); // State for the age input
   const [showCandles, setShowCandles] = useState(false); // State to toggle candle display
+  const [candlesLit, setCandlesLit] = useState([]); // State to track whether each candle's flame is lit
+
+  useEffect(() => {
+    // Initialize all candles as lit when age changes
+    setCandlesLit(Array(age).fill(true));
+  }, [age]);
 
   useEffect(() => {
     let audioContext;
     let microphone, meter;
 
-    // Get request for microphone usage
     const requestAudioAccess = () => {
       if (navigator.mediaDevices) {
         navigator.mediaDevices.getUserMedia({ audio: true })
@@ -28,7 +33,13 @@ function App() {
         const buffer = event.inputBuffer.getChannelData(0);
         const sum = buffer.reduce((acc, val) => acc + val, 0);
         const rms = Math.sqrt(sum / buffer.length);
-        processor.volume = Math.max(rms, processor.volume * 0.95); // Smooth out volume changes
+        
+        // Check blowing for each candle
+        candlesLit.forEach((isLit, index) => {
+          if (isLit && rms > 0.05) { // Adjust threshold as needed
+            extinguishCandle(index);
+          }
+        });
       };
       processor.clipping = false;
       processor.volume = 0;
@@ -36,7 +47,6 @@ function App() {
       return processor;
     }
 
-    // Set up to record volume
     const setAudioStream = (stream) => {
       audioContext = new AudioContext();
       microphone = audioContext.createMediaStreamSource(stream);
@@ -51,24 +61,34 @@ function App() {
     };
 
     requestAudioAccess();
-  }, []);
+  }, [candlesLit]);
 
-  // Function to handle displaying candles
   const displayCandles = () => {
-    setShowCandles(true); // Set showCandles state to true
+    setShowCandles(true);
+  };
+
+  const extinguishCandle = (index) => {
+    // Update the candlesLit array to extinguish the flame of the specified candle
+    setCandlesLit(prevCandlesLit => {
+      const updatedCandlesLit = [...prevCandlesLit];
+      updatedCandlesLit[index] = false;
+      return updatedCandlesLit;
+    });
   };
 
   // Generate candle elements based on age
   const candleElements = [];
-  for (let i = 0; i < age; i++) {
-    const positionX = getRandomPosition(); // Get a random horizontal position
-    const positionY = getRandomPosition(); // Get a random vertical position
-    const positionOffset = Math.random() * 0.2 - 0.1; // Generate a random offset for horizontal position
-    candleElements.push(
-      <div className="candle" style={{ '--position-x': positionX, '--position-y': positionY, '--position-offset': positionOffset }} key={i}>
-        <div className="flame"></div>
-      </div>
-    );
+  if (age !== null) {
+    for (let i = 0; i < age; i++) {
+      const positionX = getRandomPosition(); // Get a random horizontal position
+      const positionY = getRandomPosition(); // Get a random vertical position
+      const positionOffset = Math.random() * 0.2 - 0.1; // Generate a random offset for horizontal position
+      candleElements.push(
+        <div className="candle" style={{ '--position-x': positionX, '--position-y': positionY, '--position-offset': positionOffset }} key={i}>
+          <div className="flame"></div>
+        </div>
+      );
+    }
   }
 
   return (
@@ -79,8 +99,8 @@ function App() {
           <input
             type="number"
             id="ageInput"
-            value={age}
-            onChange={(e) => setAge(parseInt(e.target.value))}
+            value={age !== null ? age : ''}
+            onChange={(e) => {const value = parseInt(e.target.value); setAge(isNaN(value) ? null : value); }}
           />
           <button onClick={displayCandles}>Show Candles</button>
         </div>
@@ -106,7 +126,7 @@ function App() {
               <div className="icing-sm"></div>
             </div>
             <div className="candles">
-              {showCandles && candleElements} {/* Conditional rendering of candles */}
+              {showCandles && candleElements}
             </div>
           </div>
         </div>
