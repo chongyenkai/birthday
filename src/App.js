@@ -76,19 +76,16 @@ function App() {
     });
   };
 
-  // Generate candle elements based on age
   const candleElements = [];
-  if (age !== null) {
-    for (let i = 0; i < age; i++) {
-      const positionX = getRandomPosition(); // Get a random horizontal position
-      const positionY = getRandomPosition(); // Get a random vertical position
-      const positionOffset = Math.random() * 0.2 - 0.1; // Generate a random offset for horizontal position
-      candleElements.push(
-        <div className="candle" style={{ '--position-x': positionX, '--position-y': positionY, '--position-offset': positionOffset }} key={i}>
-          <div className="flame"></div>
-        </div>
-      );
-    }
+  for (let i = 0; i < age; i++) {
+    const positionX = getRandomPosition();
+    const positionY = getRandomPosition();
+    const positionOffset = Math.random() * 0.2 - 0.1;
+    candleElements.push(
+      <div className="candle" style={{ '--position-x': positionX, '--position-y': positionY, '--position-offset': positionOffset }} key={i}>
+        {candlesLit[i] && <div className="flame"></div>} {/* Render flame only if the candle is lit */}
+      </div>
+    );
   }
 
   return (
