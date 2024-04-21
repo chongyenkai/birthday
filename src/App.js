@@ -89,9 +89,13 @@ function App() {
     );
   }
 
+  const playBackgroundMusic = () => {
+    const audio = new Audio(backgroundMusic);
+    audio.play();
+  };
+
   return (
-    <div className="App">
-      <audio src={backgroundMusic} autoPlay loop />
+    <div className="App" onClick={playBackgroundMusic}>
       <div className="content">
         <div className="input">
           <label htmlFor="ageInput">Enter your age:</label>
