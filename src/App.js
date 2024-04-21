@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import './App.css';
+import backgroundMusic from './Happy Birthday.mp3';
 
 function getRandomPosition() {
   return Math.random(); // Returns a random value between 0 and 1
@@ -90,6 +91,7 @@ function App() {
 
   return (
     <div className="App">
+      <audio src={backgroundMusic} autoPlay loop />
       <div className="content">
         <div className="input">
           <label htmlFor="ageInput">Enter your age:</label>
