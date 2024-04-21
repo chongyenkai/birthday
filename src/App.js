@@ -11,9 +11,9 @@ function App() {
 
   useEffect(() => {
     let audioContext;
-    let microphone;
-    let meter;
+    let microphone, meter;
 
+    // Get request for microphone usage
     const requestAudioAccess = () => {
       if (navigator.mediaDevices) {
         navigator.mediaDevices.getUserMedia({ audio: true })
@@ -22,41 +22,36 @@ function App() {
       } else alert('Your browser does not support required microphone access.');
     };
 
-    const setAudioStream = (stream) => {
-      audioContext = new AudioContext();
-      microphone = audioContext.createMediaStreamSource(stream);
-      meter = createAudioMeter(audioContext);
-
-      microphone.connect(meter);
-    };
-
-    const createAudioMeter = (audioContext) => {
+    function createAudioMeter(audioContext) {
       const processor = audioContext.createScriptProcessor(512);
       processor.onaudioprocess = (event) => {
         const buffer = event.inputBuffer.getChannelData(0);
         const sum = buffer.reduce((acc, val) => acc + val, 0);
         const rms = Math.sqrt(sum / buffer.length);
-        meter.volume = Math.max(rms, meter.volume * 0.95); // Smooth out volume changes
-    
-        // If blowing detected and candles are shown, turn off candles
-        if (showCandles && meter.volume > 0.1) { // Lowered threshold to 0.1 for sensitivity
-          setShowCandles(false);
-        }
+        processor.volume = Math.max(rms, processor.volume * 0.95); // Smooth out volume changes
       };
       processor.clipping = false;
       processor.volume = 0;
       processor.connect(audioContext.destination);
       return processor;
-    };
-    
-    if (showCandles) {
-      requestAudioAccess();
-
-      return () => {
-        if (audioContext) audioContext.close();
-      };
     }
-  }, [showCandles]);
+
+    // Set up to record volume
+    const setAudioStream = (stream) => {
+      audioContext = new AudioContext();
+      microphone = audioContext.createMediaStreamSource(stream);
+      meter = createAudioMeter(audioContext);
+
+      const filter = audioContext.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.value = 400;
+
+      microphone.connect(filter);
+      filter.connect(meter);
+    };
+
+    requestAudioAccess();
+  }, []);
 
   // Function to handle displaying candles
   const displayCandles = () => {
