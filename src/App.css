@@ -41,7 +41,7 @@ p {
 }
 
 .box {
-  display: box;
+  display: flex;
   position: relative;
   width: 700px;
   height: 700px;
